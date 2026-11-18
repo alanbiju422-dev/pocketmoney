@@ -259,13 +259,30 @@ class TransactionService {
     required DateTime startDate,
     required DateTime endDate,
   }) {
+    // Supabase timestamptz values are returned in UTC, while transaction dates
+    // are entered as local wall-clock times. Compare their calendar fields so
+    // local report ranges include the dates the user entered, including late
+    // evening entries, without shifting previously stored timestamps.
+    final startWallClock = _asWallClock(startDate);
+    final endWallClock = _asWallClock(endDate);
+
     return transactions.where((txn) {
-      return (txn.dateTime.isAfter(startDate) ||
-              txn.dateTime.isAtSameMomentAs(startDate)) &&
-          (txn.dateTime.isBefore(endDate) ||
-              txn.dateTime.isAtSameMomentAs(endDate));
+      final transactionWallClock = _asWallClock(txn.dateTime);
+      return !transactionWallClock.isBefore(startWallClock) &&
+          !transactionWallClock.isAfter(endWallClock);
     }).toList();
   }
+
+  DateTime _asWallClock(DateTime dateTime) => DateTime.utc(
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+        dateTime.hour,
+        dateTime.minute,
+        dateTime.second,
+        dateTime.millisecond,
+        dateTime.microsecond,
+      );
 
   /// Generate Analytics and Summaries for a date range
   ReportSummary generateReportSummary({

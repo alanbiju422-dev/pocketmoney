@@ -35,7 +35,13 @@ lib/
 ```
 
 - **Authentication:** Managed by Supabase Auth (`SupabaseAuthRepository`), persisting user sessions and profile preferences.
-- **Transaction Storage:** Transactions currently use an in-memory repository (`MemoryTransactionRepository`) for local development and testing, resetting on app restart. The decoupled repository pattern allows switching to persistent storage (like SQLite or Supabase Database) without altering the UI or business logic.
+- **Transaction Storage:** The app uses `SupabaseTransactionRepository` to persist transactions in `public.transactions`. Each request uses the signed-in Supabase Auth user; Row Level Security policies restrict reads, inserts, and deletes to that owner. `MemoryTransactionRepository` remains available for unit and widget tests.
+
+## Supabase Database Setup
+
+Before running the app against Supabase, apply both migrations in timestamp order to the `pocket-money` project in the Supabase SQL Editor: [`20261118000100_create_user_transactions.sql`](supabase/migrations/20261118000100_create_user_transactions.sql), then [`20261118000200_fix_transactions_other_description_constraint.sql`](supabase/migrations/20261118000200_fix_transactions_other_description_constraint.sql). The first migration creates the transaction table, enables and forces RLS, grants only the required authenticated operations, and adds the table to the Realtime publication. The follow-up migration corrects the null-safe check for descriptions on `other` expenses without changing transaction rows. These migrations do not create or require a service-role key in the app.
+
+The migration intentionally stores amounts as integer paise. It keeps the current transaction ID format and category values (`travel`, `food`, `college`, `other`). Existing in-memory transactions cannot be recovered after an app restart and are not part of the migration.
 
 ## Author
 

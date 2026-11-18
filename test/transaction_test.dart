@@ -275,6 +275,25 @@ void main() {
       expect(report.getCategoryPercentage(ExpenseCategory.travel), closeTo(66.67, 0.1));
     });
 
+    test('Date range includes a late local wall-clock transaction', () {
+      final transaction = TransactionModel(
+        id: 'late-transaction',
+        type: TransactionType.expense,
+        amountPaise: 100,
+        category: ExpenseCategory.food,
+        dateTime: DateTime.utc(2026, 11, 18, 23, 30),
+        createdAt: DateTime.utc(2026, 11, 18, 23, 30),
+      );
+
+      final filtered = service.filterByDateRange(
+        transactions: [transaction],
+        startDate: DateTime(2026, 11, 18),
+        endDate: DateTime(2026, 11, 18, 23, 59, 59, 999, 999),
+      );
+
+      expect(filtered, equals([transaction]));
+    });
+
     test('Currency Formatter precision', () {
       expect(CurrencyFormatter.rupeesToPaise(100.50), equals(10050));
       expect(CurrencyFormatter.paiseToRupees(10050), equals(100.50));

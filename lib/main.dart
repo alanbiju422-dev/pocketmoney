@@ -6,8 +6,8 @@ import 'config/supabase_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/transaction_provider.dart';
-import 'repositories/memory_transaction_repository.dart';
 import 'repositories/supabase_auth_repository.dart';
+import 'repositories/supabase_transaction_repository.dart';
 import 'screens/auth/auth_gate.dart';
 import 'utils/app_constants.dart';
 import 'utils/app_theme.dart';
@@ -22,7 +22,7 @@ Future<void> main() async {
 );
 
   // Initialize decoupled repositories
-  final transactionRepository = MemoryTransactionRepository();
+  final transactionRepository = SupabaseTransactionRepository();
   final authRepository = SupabaseAuthRepository();
 
   runApp(

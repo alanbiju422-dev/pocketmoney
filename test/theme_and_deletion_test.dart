@@ -144,7 +144,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify confirmation dialog
-      expect(find.text('Delete this transaction?'), findsOneWidget);
+      expect(find.text('Are you sure you want to delete this transaction?'), findsOneWidget);
       expect(find.text('Cancel'), findsOneWidget);
       expect(find.text('Delete'), findsOneWidget);
 

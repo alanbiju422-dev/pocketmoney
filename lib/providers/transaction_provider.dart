@@ -39,9 +39,20 @@ class TransactionProvider extends ChangeNotifier {
   void _init() {
     _subscription = repository.watchTransactions().listen((updatedList) {
       _transactions = updatedList;
+      _errorMessage = null;
+      notifyListeners();
+    }, onError: (Object error) {
+      _errorMessage = 'Failed to sync transactions: $error';
       notifyListeners();
     });
     loadTransactions();
+  }
+
+  void _upsertTransaction(TransactionModel transaction) {
+    _transactions = [
+      ..._transactions.where((current) => current.id != transaction.id),
+      transaction,
+    ]..sort((a, b) => b.dateTime.compareTo(a.dateTime));
   }
 
   // Getters
@@ -140,8 +151,11 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.addIncome(amountPaise: amountPaise, dateTime: dateTime);
-      _transactions = await repository.getAllTransactions();
+      final transaction = await _service.addIncome(
+        amountPaise: amountPaise,
+        dateTime: dateTime,
+      );
+      _upsertTransaction(transaction);
     } catch (e) {
       _errorMessage = e.toString();
       rethrow;
@@ -163,13 +177,13 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _service.addExpense(
+      final transaction = await _service.addExpense(
         amountPaise: amountPaise,
         category: category,
         description: description,
         dateTime: dateTime,
       );
-      _transactions = await repository.getAllTransactions();
+      _upsertTransaction(transaction);
     } catch (e) {
       _errorMessage = e.toString();
       rethrow;
@@ -198,7 +212,9 @@ class TransactionProvider extends ChangeNotifier {
       _pendingTimers.remove(id);
       try {
         await _service.deleteTransaction(id);
-        _transactions = await repository.getAllTransactions();
+        _transactions = _transactions
+            .where((transaction) => transaction.id != id)
+            .toList();
         _pendingDeletions.remove(id);
         notifyListeners();
         onPermanentlyDeleted?.call();
@@ -234,7 +250,9 @@ class TransactionProvider extends ChangeNotifier {
     _pendingDeletions.remove(id);
     try {
       await _service.deleteTransaction(id);
-      _transactions = await repository.getAllTransactions();
+      _transactions = _transactions
+          .where((transaction) => transaction.id != id)
+          .toList();
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -247,7 +265,7 @@ class TransactionProvider extends ChangeNotifier {
   Future<void> clearAllTransactions() async {
     try {
       await _service.clearAllTransactions();
-      _transactions = await repository.getAllTransactions();
+      _transactions = [];
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
