@@ -46,12 +46,14 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Android signing keystores & secrets
+# Android release signing credentials
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
 *.jks
 *.keystore
 *.p12
 *.key
-android/key.properties
 key.properties
 android/local.properties
 local.properties
